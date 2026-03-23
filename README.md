@@ -48,7 +48,7 @@ npm install
 npm run dev
 ```
 
-`.env.local` in `real-estate-frontend`:
+Optional `.env.local` in `real-estate-frontend` (only if backend is not on default port):
 
 ```env
 NEXT_PUBLIC_BACKEND_API_BASE_URL="http://localhost:3001"

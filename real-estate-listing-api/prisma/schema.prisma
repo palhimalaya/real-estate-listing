@@ -1,0 +1,56 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Agent {
+  id       Int       @id @default(autoincrement())
+  name     String
+  email    String    @unique
+  phone    String
+  listings Listing[]
+}
+
+model Listing {
+  id           String   @id @default(uuid())
+  title        String
+  description  String
+  price        Int
+  beds         Int
+  baths        Int
+  propertyType String
+  suburb       String
+  address      String
+  imageUrls    String[]
+  createdAt    DateTime @default(now())
+
+  agentId Int
+  agent   Agent @relation(fields: [agentId], references: [id])
+
+  internalNotes String?
+  status        ListingStatus @default(ACTIVE)
+
+  @@index([price])
+  @@index([beds])
+  @@index([baths])
+  @@index([propertyType])
+  @@index([suburb])
+  @@index([createdAt])
+}
+
+enum ListingStatus {
+  DRAFT
+  ACTIVE
+  SOLD
+  ARCHIVED
+}
