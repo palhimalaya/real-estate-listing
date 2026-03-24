@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { getListings, type ListingQueryParams } from "@/lib/listings";
 import { Listing } from "@/types/listing";
@@ -30,7 +30,8 @@ function getFiltersFromSearchParams(searchParams: SearchParamsLike) {
     propertyType: searchParams.get("propertyType") ?? "",
     suburb: searchParams.get("suburb") ?? "",
     keyword: searchParams.get("keyword") ?? "",
-    sort: (searchParams.get("sort") as ListingFilterFormValues["sort"]) ?? "latest",
+    sort:
+      (searchParams.get("sort") as ListingFilterFormValues["sort"]) ?? "latest",
   };
 }
 
@@ -45,23 +46,26 @@ function buildSearchParams(filters: ListingFilterFormValues, page: number) {
     params.set("sort", filters.sort);
   }
 
-  (Object.entries(filters) as Array<[keyof ListingFilterFormValues, string]>).forEach(
-    ([key, value]) => {
-      if (key === "sort") {
-        return;
-      }
+  (
+    Object.entries(filters) as Array<[keyof ListingFilterFormValues, string]>
+  ).forEach(([key, value]) => {
+    if (key === "sort") {
+      return;
+    }
 
-      const trimmedValue = value.trim();
-      if (trimmedValue) {
-        params.set(key, trimmedValue);
-      }
-    },
-  );
+    const trimmedValue = value.trim();
+    if (trimmedValue) {
+      params.set(key, trimmedValue);
+    }
+  });
 
   return params;
 }
 
-function buildListingQueryParams(filters: ListingFilterFormValues, page: number): ListingQueryParams {
+function buildListingQueryParams(
+  filters: ListingFilterFormValues,
+  page: number,
+): ListingQueryParams {
   const params: ListingQueryParams = {
     page,
     limit: PAGE_SIZE,
@@ -100,14 +104,19 @@ export default function ListingsPageClient() {
   });
 
   const currentPage = getPositiveInt(searchParams.get("page"), 1);
-  const activeFilters = getFiltersFromSearchParams(searchParams);
+  const activeFilters = useMemo(
+    () => getFiltersFromSearchParams(searchParams),
+    [searchParams],
+  );
   const searchKey = searchParams.toString();
   const requestKey = `${searchKey}|admin:${isAdmin}`;
 
   useEffect(() => {
     let isMounted = true;
 
-    getListings(buildListingQueryParams(activeFilters, currentPage), { isAdmin })
+    getListings(buildListingQueryParams(activeFilters, currentPage), {
+      isAdmin,
+    })
       .then((res) => {
         if (!isMounted) {
           return;
@@ -138,9 +147,12 @@ export default function ListingsPageClient() {
     return () => {
       isMounted = false;
     };
-  }, [activeFilters, currentPage, isAdmin, requestKey]);
+  }, [activeFilters, currentPage, isAdmin]);
 
-  const pushFiltersToUrl = (nextFilters: ListingFilterFormValues, page: number) => {
+  const pushFiltersToUrl = (
+    nextFilters: ListingFilterFormValues,
+    page: number,
+  ) => {
     const nextSearchParams = buildSearchParams(nextFilters, page);
     const nextUrl = nextSearchParams.toString()
       ? `${pathname}?${nextSearchParams.toString()}`
@@ -152,7 +164,8 @@ export default function ListingsPageClient() {
   };
 
   const loading = resultsState.loadedKey !== requestKey;
-  const error = resultsState.loadedKey === requestKey ? resultsState.error : null;
+  const error =
+    resultsState.loadedKey === requestKey ? resultsState.error : null;
   const total = resultsState.loadedKey === requestKey ? resultsState.total : 0;
   const totalPages =
     resultsState.loadedKey === requestKey ? resultsState.totalPages : 1;
@@ -182,8 +195,8 @@ export default function ListingsPageClient() {
                 Find a place that fits how you actually live.
               </h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500 sm:text-base">
-                Refine by price, layout, property type, and suburb. Search state stays in
-                the URL so results are easy to refresh or share.
+                Refine by price, layout, property type, and suburb. Search state
+                stays in the URL so results are easy to refresh or share.
               </p>
             </div>
           </div>

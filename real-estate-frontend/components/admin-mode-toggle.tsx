@@ -11,9 +11,6 @@ export default function AdminModeToggle() {
         <p className="text-xs font-medium uppercase tracking-[0.18em] text-zinc-500">
           Admin Mode
         </p>
-        <p className="text-xs text-zinc-500">
-          {isAdmin ? "Internal notes visible" : "Standard listing view"}
-        </p>
       </div>
       <button
         type="button"

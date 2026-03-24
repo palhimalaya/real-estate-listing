@@ -24,29 +24,36 @@ export function writeAdminMode(enabled: boolean): void {
     localStorage.removeItem(ADMIN_STORAGE_KEY);
   }
 
-  window.dispatchEvent(new Event(ADMIN_MODE_EVENT));
+  window.dispatchEvent(new CustomEvent(ADMIN_MODE_EVENT, { detail: { enabled } }));
 }
 
 export function useAdminMode() {
-  const [isAdmin, setIsAdmin] = useState(readAdminMode);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    const syncAdminMode = () => {
-      setIsAdmin(readAdminMode());
+    setIsAdmin();
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === ADMIN_STORAGE_KEY) {
+        setIsAdmin(readAdminMode());
+      }
     };
 
-    window.addEventListener("storage", syncAdminMode);
-    window.addEventListener(ADMIN_MODE_EVENT, syncAdminMode);
+    const handleAdminModeChange = (e: CustomEvent<{ enabled: boolean }>) => {
+      setIsAdmin(e.detail.enabled);
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener(ADMIN_MODE_EVENT, handleAdminModeChange as EventListener);
 
     return () => {
-      window.removeEventListener("storage", syncAdminMode);
-      window.removeEventListener(ADMIN_MODE_EVENT, syncAdminMode);
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener(ADMIN_MODE_EVENT, handleAdminModeChange as EventListener);
     };
   }, []);
 
   const setAdminMode = (enabled: boolean) => {
     writeAdminMode(enabled);
-    setIsAdmin(enabled);
   };
 
   return { isAdmin, setAdminMode };
